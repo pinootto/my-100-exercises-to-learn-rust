@@ -30,7 +30,6 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/ticket", post(create_ticket))
-        // .route("/ticket/{id}", get(get_ticket))
         .route("/ticket/{id}", get(get_ticket).patch(update_ticket))
         .with_state(ticket_store);
 
@@ -56,18 +55,10 @@ async fn create_ticket(
 async fn get_ticket(
     Path(id): Path<u64>,
     State(store): State<Store>,
-    // ticket_id: u64,
-    // Json(ticket_id): Json<TicketId>,
 ) -> Result<impl IntoResponse, StatusCode> {
     println!("id = {}", id);
     let ticket_id = TicketId(id);
     let ticket = store.read().unwrap().get(ticket_id);
-    // if let Some(ticket) = ticket {
-    //     (StatusCode::OK, Json(ticket.read().unwrap()))
-    // } else {
-    //     // (StatusCode::NOT_FOUND, Json("ticket"))
-    //     (StatusCode::NOT_FOUND)
-    // }
     match ticket {
         Some(ticket) => {
             let ticket = ticket.read().unwrap();
@@ -90,15 +81,8 @@ async fn update_ticket(
     println!("id = {}", id);
     let ticket_id = TicketId(id);
     let ticket = store.read().unwrap().get(ticket_id);
-    // if let Some(ticket) = ticket {
-    //     (StatusCode::OK, Json(ticket.read().unwrap()))
-    // } else {
-    //     // (StatusCode::NOT_FOUND, Json("ticket"))
-    //     (StatusCode::NOT_FOUND)
-    // }
     match ticket {
         Some(ticket) => {
-            // let ticket = ticket.read().unwrap();
             let mut ticket = ticket.write().unwrap();
             ticket.title = ticket_draft.title;
             ticket.description = ticket_draft.description;
