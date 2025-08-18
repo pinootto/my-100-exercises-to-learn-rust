@@ -3,11 +3,10 @@ mod description;
 mod store;
 mod title;
 
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::RwLock};
 
 use data::TicketDraft;
 use std::sync::Arc;
-use std::sync::RwLock;
 use store::TicketId;
 use store::TicketStore;
 
@@ -48,7 +47,7 @@ async fn create_ticket(
     State(store): State<Store>,
     Json(ticket_draft): Json<TicketDraft>,
 ) -> impl IntoResponse {
-    let ticket_id = store.write().unwrap().add_ticket(ticket_draft);
+    let ticket_id = store.write().await.add_ticket(ticket_draft);
     (StatusCode::CREATED, Json(ticket_id))
 }
 
@@ -58,10 +57,10 @@ async fn get_ticket(
 ) -> Result<impl IntoResponse, StatusCode> {
     println!("id = {}", id);
     let ticket_id = TicketId(id);
-    let ticket = store.read().unwrap().get(ticket_id);
+    let ticket = store.read().await.get(ticket_id);
     match ticket {
         Some(ticket) => {
-            let ticket = ticket.read().unwrap();
+            let ticket = ticket.read().await;
             let ticket = ticket.clone();
             println!("{:?}", ticket);
             Ok((StatusCode::OK, Json(ticket)))
@@ -80,10 +79,10 @@ async fn update_ticket(
 ) -> Result<impl IntoResponse, StatusCode> {
     println!("id = {}", id);
     let ticket_id = TicketId(id);
-    let ticket = store.read().unwrap().get(ticket_id);
+    let ticket = store.read().await.get(ticket_id);
     match ticket {
         Some(ticket) => {
-            let mut ticket = ticket.write().unwrap();
+            let mut ticket = ticket.write().await;
             ticket.title = ticket_draft.title;
             ticket.description = ticket_draft.description;
             let ticket = ticket.clone();
